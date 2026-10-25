@@ -1,0 +1,6 @@
+interface:
+  display_name: "业务原型设计"
+  short_description: "从需求确认到单文件交互原型的全流程设计、验证与交付"
+  default_prompt: "使用 $business-prototype-design 识别现有产物成熟度，从最早未满足的门槛继续，产出开发可用的交互原型和单文件 HTML。"
+policy:
+  allow_implicit_invocation: true
