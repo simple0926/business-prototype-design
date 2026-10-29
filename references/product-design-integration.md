@@ -22,11 +22,23 @@ Product Design owns:
 
 Do not copy Product Design's focused skills into this skill. Load the current available Product Design index and follow its router because plugin behavior may evolve.
 
+## Handoff contract
+
+Before routing visual work, provide:
+
+- baseline version and relevant requirement/page IDs;
+- intended user outcome and target journey;
+- selected visual source and the decision that selected it;
+- business rules that visual implementation may not change;
+- target viewport, theme, route, content, and interaction states.
+
+Require the visual workflow to return the implementation path, comparable captures, `design-qa.md`, and unresolved findings. If visual QA suggests a business-rule change, route that proposal back to the appropriate business decision gate; do not let a visual recommendation silently change the baseline.
+
 ## Routing
 
 1. If the request is a UX critique, use Product Design audit before implementing changes.
 2. If a screenshot, Figma frame, mockup, source image, live URL, or existing design system is selected, use it as visual truth and route to the appropriate focused implementation skill.
-3. If no visual target exists, use Product Design context and ideation. Follow its selection gate before coding.
+3. If no visual target exists, use Product Design context and ideation. Record the selected result and decision evidence before coding.
 4. After implementation, run Product Design design QA with both the source visual and rendered implementation.
 5. Use Product Design sharing only after explicit user authorization to publish or deploy.
 

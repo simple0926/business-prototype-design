@@ -64,3 +64,11 @@ Each flow description must answer:
 Use one main flow for the end-to-end path and separate subflows where detail would make the main flow unreadable. Keep detailed subflow nodes out of the prototype navigation when those roles are explicitly outside prototype scope.
 
 Before handoff, compare diagram nodes and transitions against the status dictionary, role-state-action matrix, prototype, and acceptance tests.
+
+## Reviewed journey checklist
+
+For confirmed high-risk transitions, copy `assets/delivery-templates/journey-coverage.json` and create one `JNY-*` entry per observable journey. Derive entries from the approved role-state-action matrix; do not infer missing business rules from screenshots or implementation code.
+
+Prioritize journeys involving cross-role ownership, permission allow/deny behavior, required-input validation, exception or retry paths, batch partial results, persistence, and the core path. Each entry records the actor, start state, action, expected state, next actor, Requirement IDs, risk tags, and test/browser Evidence IDs.
+
+This is deliberately semi-automatic: the model drafts the checklist from confirmed transitions, a human or existing approved baseline confirms it, and the validator checks evidence binding. Do not claim that free-form Markdown has been universally parsed into an authoritative state machine.

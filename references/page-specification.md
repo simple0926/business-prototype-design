@@ -4,6 +4,8 @@ Use before building a new module or whenever existing requirements do not let a 
 
 ## Page inventory
 
+Record the baseline version and map every page or dialog to requirement IDs. A page specification is not reusable when its mapped requirement, state, permission, or visual-target decision has been invalidated.
+
 For each page or dialog record:
 
 - stable page ID and name;
@@ -73,3 +75,6 @@ A page specification is ready when:
 - the happy path and relevant failure paths are explicit;
 - visual requirements have a source or are clearly labeled recommendations;
 - each requirement maps to a visible behavior or deliberate non-UI system effect.
+- the page specification and workflow checkpoint name the same baseline version and no mapped upstream gate is invalidated.
+
+Before closing P5, compare the confirmed P2 requirements with the actual P3-P5 outputs. Every applicable requirement must reach at least one implementable surface, business transition, or deliberate non-UI effect. Record gaps and contradictions explicitly. Do not require a page mapping for a delivery-only, performance, backend, or otherwise non-UI requirement, and do not force every requirement into every artifact.
