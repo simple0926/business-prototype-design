@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.3",
+  "baseline_version": "UNCONFIRMED",
+  "evidence": [
+    {
+      "id": "EVD-001",
+      "kind": "implementation",
+      "claims": [
+        {
+          "requirement_id": "REQ-001",
+          "claim_type": "presence",
+          "scenario_id": "SCN-REQ-001-IMPLEMENTATION",
+          "assertions": [
+            "Replace with the exact observable implementation claim this artifact proves."
+          ]
+        }
+      ],
+      "path": "replace-with-existing-artifact-path",
+      "result": "pending",
+      "baseline_version": "UNCONFIRMED",
+      "captured_at": null
+    }
+  ]
+}

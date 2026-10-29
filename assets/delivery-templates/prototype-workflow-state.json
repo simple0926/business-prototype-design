@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.3",
+  "skill_version": "0.2",
+  "mode": "full",
+  "scope_id": "UNCONFIRMED",
+  "baseline_version": "UNCONFIRMED",
+  "evidence_manifest": "evidence-manifest.json",
+  "journey_coverage": "journey-coverage.json",
+  "current_phase": "P1_EVIDENCE",
+  "phases": {
+    "P1_EVIDENCE": {"status": "in_progress", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P2_REQUIREMENTS": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P3_BUSINESS_MODEL": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P4_FLOW": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P5_PAGE_SPEC": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P6_BUILD": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P7_PACKAGE": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P8_HANDOFF": {"status": "not_started", "baseline_version": null, "artifacts": [], "evidence": [], "decision_ids": [], "confirmed_by": null, "confirmed_at": null, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null}
+  },
+  "decisions": [],
+  "open_decisions": [],
+  "invalidated_artifacts": [],
+  "last_verified_at": null,
+  "next_safe_action": "Complete the evidence inventory and validate evidence-manifest.json."
+}

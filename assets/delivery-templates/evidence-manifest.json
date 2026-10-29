@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.3",
+  "sources": [
+    {
+      "source_id": "SRC-001",
+      "path": "replace-with-source-path",
+      "kind": "pdf",
+      "authority": "business_and_visual_evidence",
+      "total_units": 1,
+      "requires_visual_review": true,
+      "units": [
+        {
+          "unit_id": "page-001",
+          "sequence": 1,
+          "inspected": false,
+          "inspection_methods": [],
+          "classification": "mixed",
+          "evidence_ids": [],
+          "notes": ""
+        }
+      ]
+    }
+  ]
+}

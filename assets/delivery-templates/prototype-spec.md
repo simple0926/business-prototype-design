@@ -2,16 +2,19 @@
 
 ## 1. Module boundary
 
+- Baseline version:
 - Primary user outcome:
 - Included actors:
 - Included journeys:
 - Exclusions:
 - Selected visual target:
+- Visual target decision ID:
+- Target viewport and states:
 
 ## 2. Page and dialog inventory
 
-| Page ID | Name | Type | Actor | Entry | Exit | Status context |
-|---|---|---|---|---|---|---|
+| Page ID | Name | Type | Actor | Entry | Exit | Data scope | Status context | Requirement IDs |
+|---|---|---|---|---|---|---|---|---|
 
 ## 3. Page specifications
 
@@ -22,6 +25,8 @@
 - Layout regions:
 - Entry and exit:
 - Data scope:
+- Upstream and downstream surfaces:
+- Editability rule:
 
 #### Fields
 
@@ -30,8 +35,8 @@
 
 #### Filters, table, and operations
 
-| Element | Rule | Visibility or eligibility | Result | Failure feedback |
-|---|---|---|---|---|
+| Element | Rule | Visibility or eligibility | Revalidation | Result or transition | Success feedback | Failure behavior |
+|---|---|---|---|---|---|---|
 
 #### States and exceptions
 
@@ -40,12 +45,23 @@
 - Error:
 - Permission denied:
 - Stale or conflict:
+- Partial success:
+- Repeated action or idempotency:
+
+#### Embedded page guide
+
+- Business scenario and function:
+- Users and permissions:
+- Fields, filters, and limits:
+- States, operations, and transitions:
+- Exceptions and boundaries:
+- Acceptance points:
 
 #### Acceptance points
 
 - [ ]
 
-## 4. Requirement mapping
+## 4. Requirement and test mapping
 
-| Requirement ID | Page or dialog | Field or interaction | Test |
-|---|---|---|---|
+| Requirement ID | Page or dialog | Field or interaction | State or transition | Test or browser journey |
+|---|---|---|---|---|

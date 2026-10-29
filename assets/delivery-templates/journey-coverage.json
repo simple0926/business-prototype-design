@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.3",
+  "baseline_version": "UNCONFIRMED",
+  "journeys": [
+    {
+      "id": "JNY-001",
+      "requirement_ids": ["REQ-001"],
+      "claim_type": "state_transition",
+      "actor": "replace-with-actor",
+      "start_state": "replace-with-start-state",
+      "action": "replace-with-user-action",
+      "expected_state": "replace-with-result-state",
+      "next_actor": "replace-with-next-owner-or-same-actor",
+      "risk_tags": ["core_path"],
+      "evidence_ids": ["EVD-002"],
+      "result": "pending"
+    }
+  ]
+}
