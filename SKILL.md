@@ -1,151 +1,150 @@
 ---
 name: business-prototype-design
-description: Analyze or continue business-software prototype work from requirements, screenshots, flowcharts, PRDs, HTML, or an existing prototype; confirm implementation-changing rules, model roles and states, produce page specifications, route visual implementation through Product Design when available, and deliver a verified interactive prototype with embedded requirements and an offline standalone HTML. Use for development-reference prototypes and iterative prototype revisions, not for a disposable visual mock or ordinary production coding.
+description: Analyze or continue development-reference business-software prototypes from requirements, screenshots, flowcharts, PRDs, HTML, or existing prototypes; confirm business rules, model roles and states, specify pages, route visual implementation, and deliver a verified interactive prototype plus offline standalone HTML. Use for full workflows, approved fast prototypes, and traceable incremental revisions; not for disposable visual mocks or ordinary production coding.
+metadata:
+  version: "0.2"
 ---
 
 # Business Prototype Design
 
-Turn business requirements into a traceable, development-ready interactive prototype. Treat the business baseline, visual target, runnable prototype, embedded documentation, and acceptance evidence as one synchronized deliverable.
+Turn business requirements into a traceable, development-ready interactive prototype. Keep the confirmed business baseline, visual target, source, embedded guidance, standalone artifact, and acceptance evidence synchronized.
 
-## Start from the earliest unmet gate
+## Select the mode and earliest unmet gate
 
-Do not mechanically restart from phase one. Inspect the supplied and existing artifacts, then choose a mode:
+Inspect current project artifacts before doing substantive work, then select one mode:
 
-- **Full workflow:** requirements are fragmented, contradictory, or not approved. Start with evidence and requirement analysis.
-- **Fast prototype:** the user supplies a detailed approved baseline and asks to build from it. Check readiness briefly, then continue from page specification or visual implementation.
-- **Incremental revision:** a prototype already exists. Analyze the change impact, preserve unaffected behavior, update all affected artifacts, and rerun regression checks.
+- **Full:** requirements are fragmented, contradictory, or not approved.
+- **Fast:** the user supplied a detailed approved baseline and explicitly asked to build.
+- **Incremental:** a maintained prototype or source project exists and the request changes it.
 
-Reuse valid confirmed artifacts. A phase may be skipped; its quality gate may not. Saying “按这份需求做”, “按确认结果修改”, or equivalent authorizes using that supplied baseline, but does not resolve contradictions inside it.
+Start from the earliest unmet or invalidated phase. Reuse valid confirmed work; a phase may be skipped, but its exit gate may not. Read [references/process-and-gates.md](references/process-and-gates.md) to choose the mode, apply gate decisions, or resume work.
 
-Read [references/process-and-gates.md](references/process-and-gates.md) when choosing the starting phase or resuming interrupted work.
+For an existing project that predates the current templates, run `scripts/audit-legacy-project.py <project>` before rewriting artifacts. Treat its output as a read-only migration inventory: reuse valid business content, identify format gaps, and do not interpret legacy-format failure as a business defect.
 
-## Show execution progress in Codex
+For a multi-phase task, copy [assets/delivery-templates/prototype-workflow-state.json](assets/delivery-templates/prototype-workflow-state.json) into the project and update it when the mode is selected, a gate changes, work becomes blocked, verification starts, or handoff completes. The checkpoint is the project state of record; the conversation progress board is only its concise projection.
 
-After inspecting the available artifacts, tell the user which mode was selected, which phase work starts from, which earlier phases are being reused, and which phases remain. Show this as a compact progress board in the Codex conversation before substantive work begins.
+When a PDF, image set, slide deck, or screenshot-heavy document supplies evidence, also copy [assets/delivery-templates/evidence-manifest.json](assets/delivery-templates/evidence-manifest.json). Record every in-scope page or unit, how it was inspected, whether it is business or visual evidence, and its evidence IDs. Text extraction alone is insufficient when material information is embedded in images. `P1_EVIDENCE` may not pass until the manifest has complete source-unit coverage.
 
-Use these phase states:
+## Eight canonical phases
 
-- `✓` completed or valid existing work reused;
-- `▶` currently in progress;
-- `⏸` blocked or awaiting a user decision;
-- `○` not started;
-- `—` not applicable to the current scope.
+Use these IDs everywhere: checkpoint, progress board, artifacts, validation, and handoff.
 
-Send another concise progress update only at a meaningful milestone: when the starting phase is determined, a quality gate is completed, work becomes blocked, verification or packaging begins, or the task is completed. Each update should state the current phase, what was completed, and the next phase. Continue working after the update unless user input is required.
+| Phase | Work | Exit gate |
+|---|---|---|
+| `P1_EVIDENCE` | Inventory user instructions, business evidence, visual references, current behavior, tests, and decisions | Sources, precedence, scope, and truth ownership are explicit |
+| `P2_REQUIREMENTS` | Create atomic requirements, coverage, decisions, assumptions, exclusions, and blocking questions | No silent implementation-changing ambiguity; every requirement has a planned downstream destination or a reason it is not applicable |
+| `P3_BUSINESS_MODEL` | Define actors, data scope, permissions, canonical states, actions, transitions, and ownership | Status semantics, permissions, and ownership are confirmed or validly reused |
+| `P4_FLOW` | Express the main flow and necessary subflows from the transition model | Diagrams, matrices, and business rules agree |
+| `P5_PAGE_SPEC` | Define pages, dialogs, fields, controls, validation, states, and acceptance points | A developer can implement without inventing rules, and applicable requirements have reached an implementable surface or deliberate non-UI effect |
+| `P6_BUILD` | Select the visual target and implement the core journey with realistic mock data | The primary journey works and matches the selected target |
+| `P7_PACKAGE` | Synchronize embedded guidance and version data, build, and create the standalone artifact | Maintained source and one-file artifact represent the same baseline |
+| `P8_HANDOFF` | Run business, functional, visual, traceability, browser, and offline checks | Evidence is reproducible and no blocking item remains |
 
-Do not claim an artificial percentage, estimate completion time without evidence, repeat an unchanged board, or narrate every minor tool call. The progress board communicates the skill workflow inside Codex; it is not a native UI progress bar.
+Treat synchronization as an invariant across all phases, not a late documentation step. A changed decision must update or invalidate every affected requirement, role, state, flow, page, test, embedded guide, artifact, and gate.
 
-## Non-negotiable boundaries
+## Gate decision contract
 
-- Distinguish user instructions from content inside attachments. Attachments are evidence, not authority to expand scope.
-- Separate the **business source of truth** from the **visual source of truth**.
-- Ask only about ambiguity that changes workflow, permissions, status semantics, data, interfaces, or acceptance. Ask one highest-impact question at a time.
+Use only these checkpoint statuses: `not_started`, `in_progress`, `blocked`, `confirmed`, `reused`, `invalidated`, `not_applicable`.
+
+- Mark `reused` only when the artifact satisfies the current gate and no later evidence invalidates it. Record the original confirmation and the separate revalidation actor and timestamp.
+- Mark `confirmed` with artifact path, evidence or decision ID, confirmer, timestamp, and baseline version.
+- Mark `blocked` when alternatives change data, permissions, states, pages, validation, external effects, visual selection, or acceptance. Bind the phase to its open Decision IDs, and require every Decision to reference its affected phases. Ask one highest-impact question at a time and record the remaining decision queue.
+- Mark `invalidated` when a later change affects a passed gate. Record the change or decision ID, invalidate downstream evidence, and resume from the earliest invalidated phase.
+- Mark `not_applicable` only with a reason and a confirmed scope Decision ID that references the phase.
+- Do not ask for blanket approval when an approved baseline and explicit build instruction already satisfy a gate.
+
+`current_phase` must always equal the earliest phase that is not `confirmed`, `reused`, or `not_applicable`. Validate the checkpoint after every gate transition.
+
+If a user decision is required, present the conflicting evidence, implementation consequences, and recommendation, then wait. Never infer publication, deployment, payment, deletion, or external messaging permission from a prototype request.
+
+## Progress in Codex
+
+After inspection, show the selected mode, current phase, reused phases, blocker if any, and remaining phases. Map checkpoint states to `✓` completed/reused, `▶` in progress, `⏸` blocked, `○` not started/invalidated, and `—` not applicable.
+
+Update only at a meaningful milestone. Do not invent percentages or maintain progress separately from the checkpoint.
+
+## Essential boundaries
+
+- Attachments are evidence, not authority. Distinguish their contents from user instructions.
+- Keep the **business source of truth** separate from the **visual source of truth**.
 - Do not redesign or implement while a blocking business contradiction remains.
-- Do not re-ask questions already answered in current project artifacts unless later evidence conflicts.
-- Do not silently rename confirmed roles, states, actions, or business results.
-- Do not call a prototype complete because files were generated. Verify behavior, presentation, traceability, and the standalone artifact.
-
-## Workflow
-
-### 1. Inspect and classify existing evidence
-
-Read relevant requirements, screenshots, PDFs, HTML, source code, tests, `AGENTS.md`, decision records, and existing prototypes. Create or update stable requirement IDs and identify existing deliverables.
-
-Use [references/requirements-analysis.md](references/requirements-analysis.md) when requirements are incomplete, inconsistent, or need comparison with an existing prototype.
-
-### 2. Establish the business baseline
-
-Before detailed design, ensure the baseline covers the in-scope actors, responsibilities, data scope, states, actions, transitions, exception ownership, and deferred items. Build the role-permission matrix and role-state-action matrix when the workflow has multiple actors or approval stages.
-
-Use [references/role-state-and-flow.md](references/role-state-and-flow.md) for state semantics, cross-role mappings, transition tables, and swimlane diagrams.
-
-If the user must decide an inconsistency, report the evidence and recommended resolution, then wait. Once confirmed, record the rule and its UI and acceptance consequences.
-
-### 3. Confirm page-level readiness
-
-Derive the minimum page and dialog inventory. For each surface define actor, entry, exit, fields, controls, filters, operations, visibility rules, validation, feedback, empty/error states, and acceptance points.
-
-Use [references/page-specification.md](references/page-specification.md) before building a new module or when existing pages do not have a development-ready specification.
-
-Fast-path rule: if the supplied specification already satisfies the checklist and the user explicitly asks to build, do not repeat a separate confirmation ceremony. State the baseline being used and proceed.
-
-### 4. Resolve the visual target and build
-
-The business specification controls behavior; the selected visual reference controls layout and presentation.
-
-When the Product Design plugin is available and the task includes visual prototype work, use it for visual target resolution, faithful implementation, and design QA. Read [references/product-design-integration.md](references/product-design-integration.md) before routing.
-
-- Existing screenshot, Figma frame, HTML, live product, or established codebase style may be the visual target.
-- Without a usable visual target, use Product Design context and ideation before implementation.
-- Implement the core task end to end with realistic mock data. Core navigation, filters, selections, dialogs, submissions, status changes, and result feedback must work.
+- Do not silently rename confirmed roles, states, actions, or outcomes.
+- Do not call generated files complete without behavior, presentation, traceability, and standalone verification.
 - Keep the prototype frontend-only unless backend behavior is explicitly requested.
 
-### 5. Keep requirements and prototype synchronized
+## Phase routing
 
-For every new user change, determine the affected:
+### `P1_EVIDENCE` and `P2_REQUIREMENTS`
 
-1. requirement and decision record;
-2. actor, permission, state, operation, and transition;
-3. flow diagram;
-4. page, dialog, field, validation, and copy;
-5. automated tests and acceptance evidence;
-6. embedded requirements and version record.
+Read relevant requirements, screenshots, PDFs, HTML, source, tests, `AGENTS.md`, decisions, and prototypes. Assign stable requirement IDs and maintain separate registers for instructions, business evidence, visual references, current behavior, and recommendations. For image-bearing sources, render and inspect all in-scope units and validate the evidence manifest. Read [references/requirements-analysis.md](references/requirements-analysis.md) when evidence is incomplete, inconsistent, or must be compared with an implementation.
 
-Do not patch only the visible label when the underlying business rule changed. Preserve unrelated confirmed behavior.
+Before closing P2, review each requirement for a planned downstream destination or an explicit not-applicable reason. This is a planning check, not a demand that future P3-P8 artifacts already exist. Do not force every requirement into every artifact.
 
-### 6. Embed developer-facing guidance
+### `P3_BUSINESS_MODEL` and `P4_FLOW`
 
-Unless the user narrows the deliverable, include an in-prototype requirements area and a compact expandable guide on each main page. Keep developer guidance visually separate from operational controls.
+For multi-role or approval work, build role-permission, status, and role-state-action models. Generate flows from confirmed transitions rather than screenshots. Derive a `journey-coverage.json` checklist for high-risk confirmed transitions; this is a reviewed checklist, not an inferred universal state parser. Read [references/role-state-and-flow.md](references/role-state-and-flow.md).
 
-The embedded requirements should cover change summary, roles and permissions, business flows, states and operations, page rules, data and exceptions, acceptance criteria, and version history. Flow diagrams must be embedded rather than linked when the final deliverable is an offline HTML.
+### `P5_PAGE_SPEC`
 
-### 7. Verify and package
+Derive the minimum page and dialog inventory. Specify actor, entry, exit, data scope, fields, controls, filters, operations, visibility, validation, feedback, loading, empty, error, permission, stale, and acceptance states. Read [references/page-specification.md](references/page-specification.md).
 
-Read [references/standalone-html-contract.md](references/standalone-html-contract.md) before packaging and [references/acceptance-and-handoff.md](references/acceptance-and-handoff.md) before completion.
+Fast mode may reuse an existing specification when it passes the readiness audit. State the baseline and proceed without a ceremonial reconfirmation.
 
-Required checks, proportional to scope:
+Before closing P5, compare the P2 baseline with the actual business model, flows, page/dialog inventory, and deliberate non-UI effects. List unmapped or contradictory requirements instead of silently carrying them into implementation.
+
+### `P6_BUILD`
+
+Business requirements control behavior; the selected visual target controls presentation. When Product Design is available and visual work is in scope, read [references/product-design-integration.md](references/product-design-integration.md) before routing. Implement the core journey end to end, including navigation, filters, selections, dialogs, submissions, state changes, failure feedback, and results.
+
+### `P7_PACKAGE`
+
+Keep structured source as the maintained baseline. Unless the user narrows the deliverable, embed requirements, roles, flows, page guides, acceptance criteria, and version history. Include the contract markers defined in [references/standalone-html-contract.md](references/standalone-html-contract.md), then build the offline standalone artifact.
+
+### `P8_HANDOFF`
+
+Read [references/acceptance-and-handoff.md](references/acceptance-and-handoff.md). Run checks proportional to scope:
 
 - build and automated behavior tests;
-- browser execution of every primary flow and changed regression path;
-- console, overflow, focus, disabled, empty, error, and result states;
-- Product Design comparison against the source visual when one exists;
-- requirement-to-implementation traceability;
-- offline standalone HTML dependency validation.
+- browser execution of primary and changed regression paths;
+- console, overflow, focus, disabled, empty, error, stale, permission, and result states;
+- Product Design comparison when a visual target exists;
+- workflow-state and requirement traceability validation;
+- high-risk journey coverage with requirement-bound test or browser evidence;
+- evidence-manifest coverage and passed-evidence registry validation;
+- offline dependency validation and browser verification of the generated file itself.
+
+Treat browser targets according to environment. Local prototypes, disposable fixtures, and authorized test environments may execute state-changing journeys. Treat live or unknown environments as read-only unless the user explicitly authorizes the specific external effect; never use real sensitive data merely to prove a prototype flow.
 
 Use the supplied scripts when applicable:
 
 ```bash
+python3 scripts/validate-evidence-manifest.py evidence-manifest.json
+python3 scripts/validate-workflow-state.py prototype-workflow-state.json
+python3 scripts/validate-journey-coverage.py --journeys journey-coverage.json --evidence-register evidence-register.json --baseline-version <baseline-version>
 node scripts/build-standalone.mjs --input dist/client/index.html --output prototype-standalone.html
 python3 scripts/validate-standalone-html.py prototype-standalone.html
-python3 scripts/validate-traceability.py --requirements requirements.md --acceptance acceptance-report.md --design-qa design-qa.md
+python3 scripts/validate-traceability.py --requirements requirements-analysis.md --acceptance acceptance-report.md --evidence-register evidence-register.json --baseline-version <baseline-version> --design-qa design-qa.md
 ```
 
-Adapt paths to the project. Do not overwrite a user's existing build script when it already provides equivalent verified behavior.
+Adapt paths to the project. Reuse equivalent project-native build and test tooling rather than overwriting it.
 
-## Default deliverables
+## Deliverables by mode
 
-Produce only the artifacts appropriate to the starting mode, but reach this complete set before a full handoff unless the user narrows scope:
+- **Full:** create or confirm source-unit evidence coverage, the complete baseline, models, specification, source, embedded guidance, QA, acceptance evidence register, checkpoint, and standalone artifact.
+- **Fast:** reuse and validate the approved baseline and its source coverage; create only missing downstream artifacts, but preserve traceability to the reused evidence.
+- **Incremental:** record the change impact, invalidate affected gates, preserve unaffected behavior, update source coverage and synchronized artifacts, and run targeted plus broad regression checks with refreshed evidence entries.
 
-1. requirement analysis and confirmed decision record;
-2. role, permission, state, operation, and flow model;
-3. page-level prototype specification;
-4. runnable prototype source;
-5. embedded requirements and page guides;
-6. `design-qa.md` when a visual target exists;
-7. `acceptance-report.md` with requirement traceability and test evidence;
-8. verified offline standalone HTML.
-
-Copy the templates under [assets/delivery-templates](assets/delivery-templates) only when the project does not already contain equivalent artifacts.
+Use templates only when the project has no equivalent artifact.
 
 ## Completion standard
 
-Complete means:
+Complete means every in-scope requirement is implemented or explicitly deferred; canonical state meanings and role-facing mappings agree; core interactions work in the browser; visual QA is passed or honestly blocked by missing comparable evidence; the generated standalone works without project files or network resources; and the evidence manifest, checkpoint, requirements, flows, journey checklist, prototype, evidence register, tests, acceptance report, and version record agree. A `passed` acceptance row must resolve its implementation and test evidence IDs to existing, passed artifacts for the same baseline. Every referenced Evidence entry must contain a claim for that Requirement ID with a claim type, scenario ID, and observable assertions. High-risk interaction, validation, and state-transition journeys must resolve to matching passed test or browser claims. Requirement Source IDs must resolve in the source register, Coverage must use the defined vocabulary, and `missing` or `pending_confirmation` coverage may not be reported as `passed`.
 
-- every in-scope requirement is implemented or explicitly deferred;
-- the same state has one defined business meaning across roles, with deliberate view mappings documented;
-- core interactions work in the browser;
-- Product Design QA is passed or the absence of a comparable visual target is explicitly recorded;
-- the standalone HTML works without project files or network resources;
-- requirements, diagrams, prototype, tests, acceptance report, and version record agree.
+Validator success proves only the contracts it actually checks, such as structure, references, baseline agreement, and evidence binding. It does not by itself prove that the business rule, interaction, visual result, or external effect is correct; semantic acceptance still requires the applicable business, functional, visual, and delivery evidence.
 
-If any blocking item remains, name it and stop at the appropriate gate rather than presenting partial work as complete.
+If any blocking item remains, record it and stop at the appropriate gate instead of presenting partial work as complete.
+
+## Release and validation notes
+
+- Read [UPDATE_HISTORY_CN.md](UPDATE_HISTORY_CN.md) when explaining the public evolution from 0.1 to 0.2.
+- Read [VALIDATION_MATERIALS_CN.md](VALIDATION_MATERIALS_CN.md) when planning the next forward-validation sample or deciding what evidence a phase still needs.
