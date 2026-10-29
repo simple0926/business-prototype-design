@@ -8,6 +8,15 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
+CONTRACT_MARKERS = [
+    "BPD:REQUIREMENTS",
+    "BPD:ROLES",
+    "BPD:FLOWS",
+    "BPD:PAGE_GUIDES",
+    "BPD:VERSION",
+]
+
+
 class DependencyParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -23,30 +32,35 @@ class DependencyParser(HTMLParser):
     def _is_embedded(value):
         if not value:
             return True
-        parsed = urlparse(value.strip())
-        return parsed.scheme in {"data", "blob"} or value.startswith(("#", "javascript:"))
+        value = value.strip()
+        parsed = urlparse(value)
+        return parsed.scheme == "data" or value.startswith(("#", "javascript:"))
+
+    def _record(self, kind, value):
+        if value and not self._is_embedded(value):
+            self.external_dependencies.append((kind, value))
 
     def handle_starttag(self, tag, attrs):
         values = dict(attrs)
         if tag == "script":
             src = values.get("src")
-            if src and not self._is_embedded(src):
-                self.external_dependencies.append(("script", src))
+            if src:
+                self._record("script", src)
             else:
                 self._inside_script = True
                 self._script_has_content = False
         elif tag == "style":
             self._inside_style = True
             self._style_has_content = False
-        elif tag == "link" and values.get("rel", "").lower() == "stylesheet":
-            href = values.get("href", "")
-            if not self._is_embedded(href):
-                self.external_dependencies.append(("stylesheet", href))
-        elif tag in {"img", "source", "audio", "video", "iframe"}:
+        elif tag == "link":
+            rel = set(values.get("rel", "").lower().split())
+            if rel & {"stylesheet", "icon", "manifest", "preload", "modulepreload"}:
+                self._record(f"link.{','.join(sorted(rel))}", values.get("href", ""))
+        elif tag in {"img", "source", "audio", "video", "iframe", "embed"}:
             for attribute in ("src", "srcset", "poster"):
-                value = values.get(attribute)
-                if value and not self._is_embedded(value):
-                    self.external_dependencies.append((f"{tag}.{attribute}", value))
+                self._record(f"{tag}.{attribute}", values.get(attribute))
+        elif tag == "object":
+            self._record("object.data", values.get("data"))
 
     def handle_endtag(self, tag):
         if tag == "script" and self._inside_script:
@@ -68,7 +82,12 @@ class DependencyParser(HTMLParser):
 def main():
     parser = argparse.ArgumentParser(description="Validate an offline standalone HTML prototype.")
     parser.add_argument("html", type=Path)
-    parser.add_argument("--require", action="append", default=[], help="Text that must appear; repeatable.")
+    parser.add_argument("--require", action="append", default=[], help="Additional text that must appear; repeatable.")
+    parser.add_argument(
+        "--skip-contract-markers",
+        action="store_true",
+        help="Skip default BPD document markers for a deliberately narrowed deliverable.",
+    )
     args = parser.parse_args()
 
     if not args.html.is_file():
@@ -78,24 +97,36 @@ def main():
     text = args.html.read_text(encoding="utf-8")
     document = DependencyParser()
     document.feed(text)
-
-    css_external_urls = [
-        match.group(1)
-        for match in re.finditer(r"url\(\s*['\"]?((?:https?:)?//[^)'\"\s]+)", text, re.I)
-    ]
-    missing = [value for value in args.require if value not in text]
     errors = []
 
-    if document.external_dependencies:
-        errors.extend(f"external dependency {kind}: {value}" for kind, value in document.external_dependencies)
-    if css_external_urls:
-        errors.extend(f"external CSS URL: {value}" for value in css_external_urls)
+    for match in re.finditer(r"url\(\s*(['\"]?)(.*?)\1\s*\)", text, re.I | re.S):
+        value = match.group(2).strip()
+        if value and not document._is_embedded(value):
+            errors.append(f"external CSS URL: {value}")
+
+    javascript_patterns = {
+        "dynamic import": r"\bimport\(\s*['\"]([^'\"]+)['\"]\s*\)",
+        "fetch": r"\bfetch\(\s*['\"]([^'\"]+)['\"]",
+        "worker": r"\b(?:Worker|SharedWorker)\(\s*['\"]([^'\"]+)['\"]",
+        "service worker": r"serviceWorker\.register\(\s*['\"]([^'\"]+)['\"]",
+    }
+    for kind, pattern in javascript_patterns.items():
+        for value in re.findall(pattern, text, re.I):
+            if not document._is_embedded(value):
+                errors.append(f"external JavaScript {kind}: {value}")
+
+    errors.extend(f"external dependency {kind}: {value}" for kind, value in document.external_dependencies)
     if document.inline_scripts == 0:
         errors.append("no nonempty inline script found")
     if document.inline_styles == 0:
         errors.append("no nonempty inline style found")
-    if missing:
-        errors.extend(f"missing required text: {value}" for value in missing)
+
+    required = list(args.require)
+    if not args.skip_contract_markers:
+        required.extend(CONTRACT_MARKERS)
+    for value in required:
+        if value not in text:
+            errors.append(f"missing required text: {value}")
 
     inline_svg_count = len(re.findall(r"<svg\b", text, re.I))
     print(f"file={args.html}")
@@ -103,6 +134,7 @@ def main():
     print(f"inline_scripts={document.inline_scripts}")
     print(f"inline_styles={document.inline_styles}")
     print(f"inline_svg={inline_svg_count}")
+    print(f"contract_markers={'skipped' if args.skip_contract_markers else 'checked'}")
 
     if errors:
         for error in errors:
