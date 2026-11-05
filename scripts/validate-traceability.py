@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 
+from evidence_contract import validate_evidence_register
+
 
 FINAL_RESULTS = {"passed", "deferred", "out_of_scope", "not_applicable"}
 PENDING_RESULTS = {"pending", "blocked", "partial"}
@@ -87,7 +89,8 @@ def source_register_ids(text):
                 in_source_register = False
             continue
         cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
-        if cells and cells[0].lower() == "source id":
+        normalized_header = re.sub(r"[\s_-]+", "", cells[0].lower()) if cells else ""
+        if normalized_header in {"sourceid", "来源id", "来源编号"}:
             in_source_register = True
             continue
         if not in_source_register or not cells:
@@ -108,80 +111,36 @@ def is_iso_8601_timestamp(value):
     return parsed.tzinfo is not None
 
 
-def load_evidence_registry(path, expected_baseline, errors):
+def load_evidence_registry(path, expected_baseline, errors, forbidden_paths=()):
     if path is None:
         errors.append("passed acceptance rows require --evidence-register")
         return {}
-    try:
-        registry = read_json_required(path)
-    except FileNotFoundError:
-        errors.append(f"evidence register not found: {path}")
-        return {}
-    except json.JSONDecodeError as error:
-        errors.append(f"invalid evidence register JSON: {error}")
-        return {}
-
-    if registry.get("schema_version") != "0.3":
-        errors.append(f"unsupported evidence register schema_version: {registry.get('schema_version')!r}")
-    if registry.get("baseline_version") != expected_baseline:
-        errors.append("evidence register baseline_version does not match requested baseline")
-    entries = registry.get("evidence")
-    if not isinstance(entries, list):
-        errors.append("evidence register requires an evidence list")
-        return {}
-
-    by_id = {}
-    for entry in entries:
-        if not isinstance(entry, dict):
-            errors.append("evidence entry must be an object")
-            continue
-        evidence_id = entry.get("id")
-        if not evidence_id or not EVIDENCE_PATTERN.fullmatch(evidence_id):
-            errors.append(f"invalid evidence ID: {evidence_id!r}")
-            continue
-        if evidence_id in by_id:
-            errors.append(f"duplicate evidence ID: {evidence_id}")
-        by_id[evidence_id] = entry
-        for field in ("kind", "path", "result", "baseline_version", "captured_at"):
-            if not entry.get(field):
-                errors.append(f"{evidence_id}: missing {field}")
-        if entry.get("kind") not in EVIDENCE_KINDS:
-            errors.append(f"{evidence_id}: unsupported evidence kind {entry.get('kind')!r}")
-        captured_at = entry.get("captured_at")
-        if captured_at and not is_iso_8601_timestamp(captured_at):
-            errors.append(f"{evidence_id}: captured_at must be ISO 8601 with timezone")
-        if entry.get("result") != "passed":
-            errors.append(f"{evidence_id}: evidence result is not passed")
-        if entry.get("baseline_version") != expected_baseline:
-            errors.append(f"{evidence_id}: evidence baseline_version does not match")
-        claims = entry.get("claims")
-        if not isinstance(claims, list) or not claims:
-            errors.append(f"{evidence_id}: evidence requires a nonempty claims list")
-        else:
-            for index, claim in enumerate(claims, start=1):
-                prefix = f"{evidence_id} claim {index}"
-                if not isinstance(claim, dict):
-                    errors.append(f"{prefix}: claim must be an object")
-                    continue
-                if is_placeholder(str(claim.get("requirement_id") or "")):
-                    errors.append(f"{prefix}: missing requirement_id")
-                if claim.get("claim_type") not in CLAIM_TYPES:
-                    errors.append(f"{prefix}: unsupported claim_type {claim.get('claim_type')!r}")
-                if is_placeholder(str(claim.get("scenario_id") or "")):
-                    errors.append(f"{prefix}: missing scenario_id")
-                assertions = claim.get("assertions")
-                if not isinstance(assertions, list) or not assertions:
-                    errors.append(f"{prefix}: assertions must be a nonempty list")
-                elif any(is_placeholder(str(assertion)) for assertion in assertions):
-                    errors.append(f"{prefix}: assertions contain an empty or placeholder value")
-        evidence_path = entry.get("path")
-        if evidence_path:
-            resolved = Path(evidence_path)
-            if not resolved.is_absolute():
-                resolved = (path.resolve().parent / resolved).resolve()
-            if not resolved.exists():
-                errors.append(f"{evidence_id}: evidence path not found: {evidence_path}")
+    by_id, registry_errors = validate_evidence_register(
+        path,
+        expected_baseline,
+        forbidden_paths=forbidden_paths,
+    )
+    errors.extend(registry_errors)
     return by_id
+
+
+def referenced_ids(text, pattern):
+    return set(re.findall(pattern, text))
+
+
+def structured_result(text, marker_name, label):
+    markers = re.findall(
+        rf"<!--\s*{re.escape(marker_name)}\s*:\s*(passed|blocked|partial|pending)\s*-->",
+        text,
+        re.I,
+    )
+    summaries = re.findall(rf"{re.escape(label)}\s*:\s*(passed|blocked|partial|pending)", text, re.I)
+    values = [value.lower() for value in markers + summaries]
+    return values
+
+
+def baseline_values(text):
+    return [value.strip() for value in re.findall(r"baseline version\s*:\s*([^\n|]+)", text, re.I)]
 
 
 def main():
@@ -191,6 +150,10 @@ def main():
     parser.add_argument("--evidence-register", type=Path)
     parser.add_argument("--baseline-version")
     parser.add_argument("--design-qa", type=Path)
+    parser.add_argument("--prototype-spec", type=Path)
+    parser.add_argument("--workflow-state", type=Path)
+    parser.add_argument("--journey-coverage", type=Path)
+    parser.add_argument("--forbid-evidence-path", action="append", default=[], type=Path)
     parser.add_argument("--id-pattern", default=r"REQ-\d{3,}")
     parser.add_argument("--allow-pending", action="store_true")
     args = parser.parse_args()
@@ -211,6 +174,58 @@ def main():
     missing = sorted(requirement_ids - acceptance_ids)
     unknown = sorted(acceptance_ids - requirement_ids)
     errors = []
+
+    workflow_decision_ids = None
+    if args.workflow_state:
+        try:
+            workflow_data = read_json_required(args.workflow_state)
+        except (FileNotFoundError, OSError, json.JSONDecodeError) as error:
+            errors.append(f"invalid workflow state: {error}")
+            workflow_decision_ids = set()
+        else:
+            workflow_decision_ids = {
+                item.get("id")
+                for item in workflow_data.get("decisions", [])
+                if isinstance(item, dict) and item.get("id")
+            }
+
+    journey_ids = None
+    if args.journey_coverage:
+        try:
+            journey_data = read_json_required(args.journey_coverage)
+        except (FileNotFoundError, OSError, json.JSONDecodeError) as error:
+            errors.append(f"invalid journey coverage: {error}")
+            journey_ids = set()
+        else:
+            journey_ids = {
+                item.get("id")
+                for item in journey_data.get("journeys", [])
+                if isinstance(item, dict) and item.get("id")
+            }
+
+    registry_schema = None
+    if args.evidence_register and args.evidence_register.is_file():
+        try:
+            registry_schema = read_json_required(args.evidence_register).get("schema_version")
+        except (OSError, json.JSONDecodeError):
+            pass
+
+    if registry_schema == "0.4" and args.baseline_version:
+        for label, document in (("requirements", requirements), ("acceptance", acceptance)):
+            values = baseline_values(document)
+            if not values:
+                errors.append(f"{label} document requires Baseline version")
+            elif set(values) != {args.baseline_version}:
+                errors.append(f"{label} baseline version does not match requested baseline")
+
+    acceptance_results = structured_result(acceptance, "ACCEPTANCE_RESULT", "Overall result")
+    if registry_schema == "0.4" and not acceptance_results:
+        errors.append("acceptance report requires structured and human-readable overall results")
+    elif acceptance_results:
+        if len(set(acceptance_results)) != 1:
+            errors.append("acceptance report contains contradictory overall results")
+        elif acceptance_results[-1] != "passed" and not args.allow_pending:
+            errors.append("acceptance report overall result is not passed")
 
     if not requirement_rows:
         errors.append("no requirement table rows found")
@@ -247,6 +262,18 @@ def main():
         for source_id in source_ids:
             if source_id not in registered_source_ids:
                 errors.append(f"{identifier} line {line_number}: unknown source ID {source_id}")
+        decision_ids = referenced_ids(cells[5], r"\bDEC-\d{3,}\b")
+        if workflow_decision_ids is not None:
+            if not decision_ids:
+                errors.append(f"{identifier} line {line_number}: decision requires a Decision ID")
+            for decision_id in sorted(decision_ids - workflow_decision_ids):
+                errors.append(f"{identifier} line {line_number}: unknown decision ID {decision_id}")
+        referenced_journeys = referenced_ids(" ".join(cells[4:]), r"\bJNY-\d{3,}\b")
+        if workflow_decision_ids is not None and referenced_journeys and journey_ids is None:
+            errors.append(f"{identifier} line {line_number}: journey references require journey coverage")
+        elif journey_ids is not None:
+            for journey_id in sorted(referenced_journeys - journey_ids):
+                errors.append(f"{identifier} line {line_number}: unknown journey ID {journey_id}")
         coverage = normalized_value(cells[3])
         requirement_coverage[identifier] = coverage
         if coverage not in COVERAGE_VALUES:
@@ -271,17 +298,53 @@ def main():
         if result == "passed":
             passed_rows.append((line_number, cells))
             coverage = requirement_coverage.get(identifier)
-            if coverage in {"missing", "pending_confirmation"}:
+            if coverage in {"partial", "missing", "pending_confirmation"}:
                 errors.append(
                     f"{identifier} line {line_number}: coverage {coverage} cannot have result passed"
                 )
+
+    prototype_spec_path = args.prototype_spec or args.requirements.resolve().parent / "prototype-spec.md"
+    prototype_spec = None
+    if passed_rows:
+        if not prototype_spec_path.is_file():
+            errors.append(f"prototype specification not found: {prototype_spec_path}")
+        else:
+            prototype_spec = prototype_spec_path.read_text(encoding="utf-8")
+            if registry_schema == "0.4":
+                values = baseline_values(prototype_spec)
+                if not values or set(values) != {args.baseline_version}:
+                    errors.append("prototype specification baseline version does not match requested baseline")
+            known_pages = referenced_ids(prototype_spec, r"\bPAGE-\d{3,}\b")
+            known_acceptance = referenced_ids(prototype_spec, r"\bACC-\d{3,}\b")
+            for line_number, cells in requirement_rows:
+                requirement_id = cells[0]
+                if len(cells) != 8:
+                    continue
+                for page_id in referenced_ids(cells[6], r"\bPAGE-\d{3,}\b"):
+                    if page_id not in known_pages:
+                        errors.append(f"{requirement_id} line {line_number}: unknown page ID {page_id}")
+                for acceptance_id in referenced_ids(cells[7], r"\bACC-\d{3,}\b"):
+                    if acceptance_id not in known_acceptance:
+                        errors.append(
+                            f"{requirement_id} line {line_number}: unknown acceptance mapping ID {acceptance_id}"
+                        )
 
     evidence_by_id = {}
     if passed_rows:
         if not args.baseline_version:
             errors.append("passed acceptance rows require --baseline-version")
         else:
-            evidence_by_id = load_evidence_registry(args.evidence_register, args.baseline_version, errors)
+            evidence_by_id = load_evidence_registry(
+                args.evidence_register,
+                args.baseline_version,
+                errors,
+                forbidden_paths=(
+                    args.requirements,
+                    args.acceptance,
+                    prototype_spec_path,
+                    *args.forbid_evidence_path,
+                ),
+            )
         for line_number, cells in passed_rows:
             identifier = cells[0]
             for index, label, allowed_kinds in (
@@ -319,10 +382,12 @@ def main():
     if design_qa is not None:
         marker = re.findall(r"<!--\s*DESIGN_QA_RESULT\s*:\s*(passed|blocked)\s*-->", design_qa, re.I)
         fallback = re.findall(r"final result\s*:\s*(passed|blocked)", design_qa, re.I)
-        matches = marker or fallback
+        matches = [value.lower() for value in marker + fallback]
         if not matches:
             errors.append("design QA has no structured final result")
-        elif matches[-1].lower() != "passed":
+        elif len(set(matches)) != 1:
+            errors.append("design QA contains contradictory final results")
+        elif matches[-1] != "passed":
             errors.append("design QA final result is not passed")
 
     print(f"requirements={len(requirement_ids)}")

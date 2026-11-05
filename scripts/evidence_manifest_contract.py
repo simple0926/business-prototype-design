@@ -1,11 +1,33 @@
 #!/usr/bin/env python3
 
 import json
+import re
 from pathlib import Path
+
+from evidence_contract import sha256_file
 
 
 CLASSIFICATIONS = {"business", "visual", "mixed", "out_of_scope"}
 VISUAL_METHODS = {"render", "visual"}
+EVIDENCE_PATTERN = re.compile(r"EVD-\d{3,}")
+SUPPORTED_SCHEMAS = {"0.3", "0.4"}
+
+
+def inferred_binary_kind(path):
+    suffix = path.suffix.lower()
+    try:
+        header = path.read_bytes()[:16]
+    except OSError:
+        return None
+    if suffix == ".pdf" or header.startswith(b"%PDF-"):
+        return "pdf"
+    if suffix in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".bmp", ".tif", ".tiff"}:
+        return "image"
+    if header.startswith((b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff", b"GIF87a", b"GIF89a")):
+        return "image"
+    if header.startswith(b"RIFF") and header[8:12] == b"WEBP":
+        return "image"
+    return None
 
 
 def resolve_path(base, value):
@@ -20,14 +42,22 @@ def load_manifest(path):
         return None, [f"invalid evidence manifest: {error}"]
 
 
-def validate_manifest(path):
+def validate_manifest(path, evidence_ids=None, expected_baseline=None, require_schema=None):
     path = Path(path).resolve()
     manifest, errors = load_manifest(path)
     if manifest is None:
         return errors, {"sources": 0, "units": 0}
 
-    if manifest.get("schema_version") != "0.3":
+    schema = manifest.get("schema_version")
+    if schema not in SUPPORTED_SCHEMAS:
         errors.append(f"unsupported evidence manifest schema_version: {manifest.get('schema_version')!r}")
+    if require_schema and schema != require_schema:
+        errors.append(f"evidence manifest schema_version must be {require_schema!r}")
+    if schema == "0.4":
+        if not manifest.get("baseline_version"):
+            errors.append("evidence manifest requires baseline_version")
+        elif expected_baseline and manifest.get("baseline_version") != expected_baseline:
+            errors.append("evidence manifest baseline_version does not match")
 
     sources = manifest.get("sources")
     if not isinstance(sources, list) or not sources:
@@ -51,12 +81,25 @@ def validate_manifest(path):
         source_path = source.get("path")
         if not source_path:
             errors.append(f"{source_id}: source path is required")
-        elif not resolve_path(path.parent, source_path).is_file():
-            errors.append(f"{source_id}: source path not found: {source_path}")
+        else:
+            resolved_source = resolve_path(path.parent, source_path)
+            if not resolved_source.is_file():
+                errors.append(f"{source_id}: source path not found: {source_path}")
+            else:
+                inferred_kind = inferred_binary_kind(resolved_source)
+                if inferred_kind and source.get("kind") != inferred_kind:
+                    errors.append(f"{source_id}: source kind must match detected {inferred_kind} file")
+                if schema == "0.4":
+                    if source.get("sha256") != sha256_file(resolved_source):
+                        errors.append(f"{source_id}: source sha256 does not match")
+                    if source.get("bytes") != resolved_source.stat().st_size:
+                        errors.append(f"{source_id}: source bytes does not match")
         if not source.get("authority"):
             errors.append(f"{source_id}: authority is required")
         if source.get("kind") not in {"pdf", "image", "document", "code", "other"}:
             errors.append(f"{source_id}: unsupported kind {source.get('kind')!r}")
+        if source.get("kind") in {"pdf", "image"} and source.get("requires_visual_review") is not True:
+            errors.append(f"{source_id}: PDF and image sources require visual review")
 
         total_units = source.get("total_units")
         if not isinstance(total_units, int) or total_units < 1:
@@ -91,8 +134,16 @@ def validate_manifest(path):
             if classification == "out_of_scope":
                 if not unit.get("notes"):
                     errors.append(f"{source_id}/{unit_label}: out_of_scope unit requires notes")
-            elif not unit.get("evidence_ids"):
-                errors.append(f"{source_id}/{unit_label}: in-scope unit requires evidence_ids")
+            else:
+                unit_evidence_ids = unit.get("evidence_ids")
+                if not isinstance(unit_evidence_ids, list) or not unit_evidence_ids:
+                    errors.append(f"{source_id}/{unit_label}: in-scope unit requires evidence_ids")
+                else:
+                    for evidence_id in unit_evidence_ids:
+                        if not isinstance(evidence_id, str) or not EVIDENCE_PATTERN.fullmatch(evidence_id):
+                            errors.append(f"{source_id}/{unit_label}: invalid evidence ID {evidence_id!r}")
+                        elif evidence_ids is not None and evidence_id not in evidence_ids:
+                            errors.append(f"{source_id}/{unit_label}: unknown evidence ID {evidence_id}")
 
         expected = set(range(1, total_units + 1))
         actual = set(sequences)
