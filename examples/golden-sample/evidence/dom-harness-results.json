@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.1",
+  "environment": "node-dom-harness",
+  "target": "prototype-standalone.html",
+  "viewport": "1280x800",
+  "test_count": 6,
+  "passed": 6,
+  "failed": 0,
+  "exit_code": 0,
+  "steps": [
+    "initial review queue is empty and approval is disabled",
+    "create enters draft state",
+    "approval before submission is a no-op",
+    "empty title blocks submission",
+    "complete draft transitions to submitted",
+    "submitted request transitions to approved"
+  ],
+  "assertions": [
+    {
+      "name": "initial review queue is empty and approval is disabled",
+      "passed": true
+    },
+    {
+      "name": "create enters draft state",
+      "passed": true
+    },
+    {
+      "name": "approval before submission is a no-op",
+      "passed": true
+    },
+    {
+      "name": "empty title blocks submission",
+      "passed": true
+    },
+    {
+      "name": "complete draft transitions to submitted",
+      "passed": true
+    },
+    {
+      "name": "submitted request transitions to approved",
+      "passed": true
+    }
+  ],
+  "network_requests": [],
+  "console_errors": []
+}

@@ -1,0 +1,8 @@
+TAP version 13
+ok 1 - initial review queue is empty and approval is disabled
+ok 2 - create enters draft state
+ok 3 - approval before submission is a no-op
+ok 4 - empty title blocks submission
+ok 5 - complete draft transitions to submitted
+ok 6 - submitted request transitions to approved
+1..6
