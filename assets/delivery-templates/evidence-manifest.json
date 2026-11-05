@@ -1,9 +1,12 @@
 {
-  "schema_version": "0.3",
+  "schema_version": "0.4",
+  "baseline_version": "UNCONFIRMED",
   "sources": [
     {
       "source_id": "SRC-001",
       "path": "replace-with-source-path",
+      "sha256": "replace-with-sha256",
+      "bytes": 0,
       "kind": "pdf",
       "authority": "business_and_visual_evidence",
       "total_units": 1,
