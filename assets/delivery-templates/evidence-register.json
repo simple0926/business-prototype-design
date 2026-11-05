@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.3",
+  "schema_version": "0.4",
   "baseline_version": "UNCONFIRMED",
   "evidence": [
     {
@@ -16,6 +16,9 @@
         }
       ],
       "path": "replace-with-existing-artifact-path",
+      "sha256": "replace-with-sha256",
+      "bytes": 0,
+      "media_type": "replace-with-media-type",
       "result": "pending",
       "baseline_version": "UNCONFIRMED",
       "captured_at": null

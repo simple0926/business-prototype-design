@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Golden Request Workbench</title>
+  <style>
+    :root{font:15px/1.5 system-ui,sans-serif;color:#172033;background:#eef2f7}*{box-sizing:border-box}body{margin:0}header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:#172033;color:white}nav{display:flex;gap:8px}button{border:0;border-radius:8px;padding:9px 14px;cursor:pointer}nav button{background:#33415c;color:white}.primary{background:#2f6fed;color:white}main{max-width:960px;margin:24px auto;padding:0 16px}.panel{display:none;background:white;border-radius:12px;padding:20px;box-shadow:0 8px 28px #17203318}.panel.active{display:block}.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #e5eaf1}.field{display:grid;gap:6px;margin:14px 0}input{padding:10px;border:1px solid #bcc5d2;border-radius:8px}.error{color:#b42318;min-height:22px}.status{font-weight:700}.docs{margin-top:28px;background:#f7f9fc;padding:16px;border-radius:10px}.actions{display:flex;gap:10px;margin-top:16px}
+  </style>
+</head>
+<body>
+  <header><strong>Golden Request Workbench</strong><nav><button data-page="list">Requests</button><button data-page="review">Review queue</button></nav></header>
+  <main>
+    <section id="list" class="panel active"><h1>Requests</h1><div class="row"><span id="request-summary">No request created</span><span id="request-status" class="status">new</span></div><div class="actions"><button id="create" class="primary">Create request</button></div></section>
+    <section id="edit" class="panel"><h1>Request editor</h1><label class="field">Title<input id="title" maxlength="80" value="Access request"></label><div id="error" class="error" role="alert"></div><div class="actions"><button id="save">Save draft</button><button id="submit" class="primary">Submit</button></div></section>
+    <section id="review" class="panel"><h1>Review queue</h1><div class="row"><span id="review-title">No submitted request</span><span id="review-status" class="status">empty</span></div><div class="actions"><button id="approve" class="primary" disabled>Approve</button></div></section>
+    <aside class="docs">
+      <!-- BPD:REQUIREMENTS:START --><section><h2>Requirements</h2><p>REQ-001 through REQ-004 cover draft creation, submission, approval, and required-title validation.</p></section><!-- BPD:REQUIREMENTS:END -->
+      <!-- BPD:ROLES:START --><section><h2>Roles</h2><p>Requester owns new and draft work; Reviewer owns submitted and approved work.</p></section><!-- BPD:ROLES:END -->
+      <!-- BPD:FLOWS:START --><section><h2>Flow</h2><p>The canonical lifecycle is new to draft to submitted to approved, with ownership transferred on submit.</p></section><!-- BPD:FLOWS:END -->
+      <!-- BPD:PAGE_GUIDES:START --><section><h2>Page guides</h2><p>Three pages expose the request list, editor validation and submit action, and reviewer approval queue.</p></section><!-- BPD:PAGE_GUIDES:END -->
+      <!-- BPD:VERSION:START --><section><h2>Version</h2><p>Skill 0.3, artifact schema 0.4, baseline B-GOLDEN-001, generated for the public golden sample.</p></section><!-- BPD:VERSION:END -->
+    </aside>
+  </main>
+  <script>
+    const pages=[...document.querySelectorAll('.panel')];
+    const show=id=>{pages.forEach(p=>p.classList.toggle('active',p.id===id))};
+    document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.page)));
+    let state='new';
+    const title=document.querySelector('#title');
+    const error=document.querySelector('#error');
+    const approve=document.querySelector('#approve');
+    const render=()=>{
+      document.querySelector('#request-status').textContent=state;
+      document.querySelector('#request-summary').textContent=state==='new'?'No request created':(title.value||'Untitled request');
+      const reviewReady=state==='submitted'||state==='approved';
+      document.querySelector('#review-title').textContent=reviewReady?title.value:'No submitted request';
+      document.querySelector('#review-status').textContent=reviewReady?state:'empty';
+      approve.disabled=state!=='submitted';
+    };
+    document.querySelector('#create').addEventListener('click',()=>{state='draft';error.textContent='';render();show('edit')});
+    document.querySelector('#save').addEventListener('click',()=>{state='draft';render();show('list')});
+    document.querySelector('#submit').addEventListener('click',()=>{if(state!=='draft')return;if(!title.value.trim()){error.textContent='Title is required';return}error.textContent='';state='submitted';render();show('list')});
+    approve.addEventListener('click',()=>{if(state!=='submitted')return;state='approved';render()});
+    render();
+  </script>
+</body>
+</html>
+

@@ -6,6 +6,8 @@ import re
 import sys
 from pathlib import Path
 
+from evidence_contract import validate_evidence_register
+
 
 JOURNEY_PATTERN = re.compile(r"JNY-\d{3,}")
 EVIDENCE_PATTERN = re.compile(r"EVD-\d{3,}")
@@ -40,10 +42,11 @@ def main():
     parser.add_argument("--evidence-register", required=True, type=Path)
     parser.add_argument("--baseline-version", required=True)
     parser.add_argument("--allow-pending", action="store_true")
+    parser.add_argument("--requirements", type=Path)
+    parser.add_argument("--require-schema", choices=("0.3", "0.4"))
     args = parser.parse_args()
 
     try:
-        register = read_json(args.evidence_register)
         coverage = read_json(args.journeys)
     except FileNotFoundError as error:
         print(f"ERROR: file not found: {error.args[0]}", file=sys.stderr)
@@ -53,24 +56,26 @@ def main():
         return 2
 
     errors = []
-    if coverage.get("schema_version") != "0.3":
+    if coverage.get("schema_version") not in {"0.3", "0.4"}:
         errors.append(f"unsupported journey schema_version: {coverage.get('schema_version')!r}")
+    if args.require_schema and coverage.get("schema_version") != args.require_schema:
+        errors.append(f"journey schema_version must be {args.require_schema!r}")
     if coverage.get("baseline_version") != args.baseline_version:
         errors.append("journey baseline_version does not match requested baseline")
-    if register.get("baseline_version") != args.baseline_version:
-        errors.append("evidence register baseline_version does not match requested baseline")
+    evidence_by_id, evidence_errors = validate_evidence_register(
+        args.evidence_register,
+        args.baseline_version,
+        require_schema=args.require_schema,
+    )
+    errors.extend(evidence_errors)
 
-    evidence_by_id = {}
-    entries = register.get("evidence")
-    if not isinstance(entries, list):
-        errors.append("evidence register requires an evidence list")
-        entries = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        evidence_id = entry.get("id")
-        if isinstance(evidence_id, str):
-            evidence_by_id[evidence_id] = entry
+    known_requirements = None
+    if args.requirements:
+        if not args.requirements.is_file():
+            errors.append(f"requirements file not found: {args.requirements}")
+            known_requirements = set()
+        else:
+            known_requirements = set(re.findall(r"\bREQ-\d{3,}\b", args.requirements.read_text(encoding="utf-8")))
 
     journeys = coverage.get("journeys")
     if not isinstance(journeys, list) or not journeys:
@@ -104,6 +109,12 @@ def main():
         ):
             errors.append(f"{journey_id}: requirement_ids must be a nonempty string list")
             requirement_ids = []
+        elif known_requirements is not None:
+            unknown_requirements = sorted(set(requirement_ids) - known_requirements)
+            if unknown_requirements:
+                errors.append(
+                    f"{journey_id}: unknown requirement IDs: {', '.join(unknown_requirements)}"
+                )
 
         risk_tags = journey.get("risk_tags")
         if not isinstance(risk_tags, list) or not risk_tags:

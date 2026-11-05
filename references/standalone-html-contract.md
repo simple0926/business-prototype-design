@@ -32,14 +32,14 @@ Unless scope is narrowed, the standalone artifact contains:
 - version history;
 - realistic mock data needed for demonstrations.
 
-Add these stable HTML comment markers beside the corresponding embedded sections so the validator can check the contract without relying on visible copy:
+Wrap each substantive embedded section in paired HTML comment markers. Marker-only comments or empty sections do not satisfy the contract:
 
 ```html
-<!-- BPD:REQUIREMENTS -->
-<!-- BPD:ROLES -->
-<!-- BPD:FLOWS -->
-<!-- BPD:PAGE_GUIDES -->
-<!-- BPD:VERSION -->
+<!-- BPD:REQUIREMENTS:START -->...substantive content...<!-- BPD:REQUIREMENTS:END -->
+<!-- BPD:ROLES:START -->...substantive content...<!-- BPD:ROLES:END -->
+<!-- BPD:FLOWS:START -->...substantive content...<!-- BPD:FLOWS:END -->
+<!-- BPD:PAGE_GUIDES:START -->...substantive content...<!-- BPD:PAGE_GUIDES:END -->
+<!-- BPD:VERSION:START -->...substantive content...<!-- BPD:VERSION:END -->
 ```
 
 If the user explicitly narrows the standalone deliverable and one or more sections are not applicable, record that scope decision in the checkpoint and acceptance report. Only then use `--skip-contract-markers` and add explicit `--require` values for the remaining contract.
@@ -54,6 +54,9 @@ If the user explicitly narrows the standalone deliverable and one or more sectio
 - Ordinary hyperlinks may remain when informational, but must not be required for prototype operation.
 - Static `blob:` URLs are not portable delivery dependencies. Generate blobs at runtime from embedded data or use data URLs.
 - Dynamic imports, workers, service workers, manifests, preload targets, and fetched local files must be bundled or eliminated from the required journey.
+- Static ES imports, `export ... from`, and CSS `@import` must also be bundled or eliminated.
+- Block/line comments and CSS identifier escapes do not bypass the rule. The generic validator permits only one data-URL candidate in `srcset`; use separately embedded `<picture>` sources when multiple offline variants are required.
+- Every asset resolved by the generic builder must remain inside the real build root after symlink resolution; parent-directory and symlink escapes are rejected.
 
 ## Build strategy
 
@@ -63,12 +66,12 @@ Use `scripts/build-standalone.mjs` as a generic starting point only when the pro
 
 ## Validation
 
-Run `scripts/validate-standalone-html.py` and then open the generated HTML itself in a browser. The validator checks the five contract markers by default. Test navigation and the primary journey from the standalone file, not only from the development server.
+Run `scripts/validate-standalone-html.py` and then open the generated HTML itself in a browser. The validator checks the five paired, substantive contract sections by default. Test navigation and the primary journey from the standalone file, not only from the development server.
 
 Check:
 
 - nonempty inline CSS and JavaScript;
-- no external script, stylesheet, image, media, or CSS URL dependency;
+- no external script, stylesheet, image, media, `srcset` candidate, or CSS URL dependency;
 - no relative CSS URL, static blob URL, dynamic import, worker, service worker, or required fetch dependency;
 - required document sections and diagrams are present;
 - browser console has no blocking errors;

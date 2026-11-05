@@ -4,7 +4,7 @@
 
 ## 1. Result and baseline
 
-- Skill version: 0.2
+- Skill version: 0.3
 - Workflow checkpoint:
 - Evidence register:
 - Journey coverage:
@@ -25,7 +25,7 @@
 
 Result values: `passed`, `deferred`, `out_of_scope`, `not_applicable`. Use `blocked`, `pending`, or `partial` only before final handoff and validate with `--allow-pending`.
 
-Every `passed` row must reference `EVD-*` entries in `evidence-register.json`. Each entry must resolve to an existing artifact, have `result: passed`, match the report baseline, and include an ISO 8601 capture timestamp with timezone. Implementation evidence must use `kind: implementation`; test/browser evidence must use `kind: test` or `kind: browser`. Each referenced entry must contain a claim for the current Requirement ID with a supported claim type, scenario ID, and observable assertions. Placeholder values such as `not-run` and `not-implemented` are not evidence.
+Every `passed` row must reference schema `0.4` `EVD-*` entries in `evidence-register.json`. Each entry must resolve to an independent file, have `result: passed`, match the report baseline, include an ISO 8601 capture timestamp, and match its SHA-256, byte count, and media type. Implementation evidence must use `kind: implementation`; test/browser evidence must use `kind: test` or `kind: browser`. Each referenced entry must contain a claim for the current Requirement ID with a supported claim type, scenario ID, and observable assertions. Placeholder values such as `not-run`, `not-implemented`, and `lorem ipsum` are not evidence.
 
 ## 4. Automated checks
 

@@ -30,9 +30,9 @@ Assign stable IDs such as `REQ-001`. Each item should identify:
 
 For interaction, validation, or state-transition requirements, include the reviewed `JNY-*` scenario IDs in the acceptance mapping once the P3/P4 model is confirmed. Do not invent journey IDs before the underlying rule is confirmed.
 
-Every requirement Source ID must resolve to the source register. User instructions and confirmations are valid sources when explicitly registered; they do not need to appear in the image/PDF evidence manifest.
+Every requirement Source ID must resolve to the source register. The validator accepts `Source ID`, `来源 ID`, or `来源编号` as the source-register header. User instructions and confirmations are valid sources when explicitly registered; they do not need to appear in the image/PDF evidence manifest.
 
-Classify coverage as `satisfied`, `partial`, `missing`, `pending confirmation`, `deferred`, or `out of scope`. Normalize `pending confirmation` as `pending_confirmation` in the delivery table. `missing` and `pending_confirmation` coverage may not have a final acceptance result of `passed`.
+Classify coverage as `satisfied`, `partial`, `missing`, `pending confirmation`, `deferred`, or `out of scope`. Normalize `pending confirmation` as `pending_confirmation` in the delivery table. `partial`, `missing`, and `pending_confirmation` coverage may not have a final acceptance result of fully `passed`; split an accepted sub-scope into atomic requirements instead of hiding remaining scope.
 
 ## Ask only implementation-changing questions
 

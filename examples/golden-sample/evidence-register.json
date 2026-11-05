@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.4",
+  "baseline_version": "B-GOLDEN-001",
+  "evidence": [
+    {
+      "id": "EVD-001",
+      "kind": "implementation",
+      "claims": [
+        {"requirement_id": "REQ-001", "claim_type": "presence", "scenario_id": "SCN-REQ-001-IMPLEMENTATION", "assertions": ["The standalone contains the request list and request editor controls."]},
+        {"requirement_id": "REQ-002", "claim_type": "interaction", "scenario_id": "SCN-REQ-002-IMPLEMENTATION", "assertions": ["The submit handler changes draft state to submitted and updates the reviewer queue."]},
+        {"requirement_id": "REQ-003", "claim_type": "interaction", "scenario_id": "SCN-REQ-003-IMPLEMENTATION", "assertions": ["The reviewer queue exposes an approve action that changes the request to approved."]},
+        {"requirement_id": "REQ-004", "claim_type": "validation", "scenario_id": "SCN-REQ-004-IMPLEMENTATION", "assertions": ["The submit handler blocks an empty title and renders required-title feedback."]}
+      ],
+      "path": "prototype-standalone.html",
+      "sha256": "a74877caef176e23c1006599eb4e03f2710987d20dfe811ae61cba527d43bdac",
+      "bytes": 4866,
+      "media_type": "text/html",
+      "result": "passed",
+      "baseline_version": "B-GOLDEN-001",
+      "captured_at": "2026-11-04T20:00:00+08:00"
+    },
+    {
+      "id": "EVD-002",
+      "kind": "test",
+      "claims": [
+        {"requirement_id": "REQ-001", "claim_type": "presence", "scenario_id": "SCN-REQ-001-TEST", "assertions": ["The request list and draft creation checks passed."]},
+        {"requirement_id": "REQ-002", "claim_type": "state_transition", "scenario_id": "JNY-001", "assertions": ["Submitting a complete draft changes state to submitted and assigns Reviewer as next actor."]},
+        {"requirement_id": "REQ-004", "claim_type": "validation", "scenario_id": "SCN-REQ-004-TEST", "assertions": ["Submitting an empty title preserves draft state and displays validation feedback."]}
+      ],
+      "path": "evidence/test-results.tap",
+      "sha256": "58197c0579fe241ae6a913d0dc25c102f97e3b7bbfa38e7e9fdfe5ae8c41c628",
+      "bytes": 293,
+      "media_type": "application/octet-stream",
+      "command": "node verify-sample.mjs",
+      "exit_code": 0,
+      "test_count": 6,
+      "result_summary": "Six executable golden sample behavior checks passed.",
+      "result": "passed",
+      "baseline_version": "B-GOLDEN-001",
+      "captured_at": "2026-11-04T20:01:00+08:00"
+    },
+    {
+      "id": "EVD-003",
+      "kind": "test",
+      "claims": [
+        {"requirement_id": "REQ-003", "claim_type": "interaction", "scenario_id": "SCN-REQ-003-BROWSER", "assertions": ["Reviewer approval changed the visible request state from submitted to approved."]}
+      ],
+      "path": "evidence/dom-harness-results.json",
+      "sha256": "25670e964b8e8ba0a9a6a6b05cfacb83ce00423ad99d9eb5bca383e8ea22b13b",
+      "bytes": 1100,
+      "media_type": "application/json",
+      "command": "node verify-sample.mjs --trace-json",
+      "exit_code": 0,
+      "test_count": 6,
+      "environment": "node-dom-harness",
+      "target": "prototype-standalone.html",
+      "viewport": "1280x800",
+      "result_summary": "Structured DOM-harness test trace recorded six passing assertions and no console or network events.",
+      "result": "passed",
+      "baseline_version": "B-GOLDEN-001",
+      "captured_at": "2026-11-04T20:02:00+08:00"
+    }
+  ]
+}
+

@@ -19,6 +19,10 @@ Synchronization is a cross-phase invariant. Do not create a ninth â€œsync laterâ
 
 ## Mode selection
 
+### Lite
+
+Use only when the scope has one actor, at most two canonical states, and no permission rules, money, deletion, external effects, sensitive data, or approval flow. Record these facts in `risk_profile`; final package validation derives actor/state counts and conservative risk signals from the standard Role, Canonical state, requirement, and prototype-spec contracts. Upgrade to Full or Fast when actor count reaches 2, state count reaches 3, or any risk flag becomes true.
+
 ### Full
 
 Use when requirements are fragmented, conflicting, or not approved. Expected path starts at `P1_EVIDENCE` and normally reaches all eight gates.
@@ -40,7 +44,7 @@ Every phase entry in `prototype-workflow-state.json` uses one status:
 | `not_started` | No work or reusable result yet | None |
 | `in_progress` | Work is active and unblocked | Current artifact paths when available |
 | `blocked` | A user decision or external prerequisite prevents safe progress | Phase-bound Decision IDs, affected phases, next question |
-| `confirmed` | Exit criteria were met in this workflow | Artifact paths, evidence IDs, confirmer, timestamp |
+| `confirmed` | Exit criteria were met in this workflow | File artifact paths, resolved evidence IDs, confirmation provenance, ISO timestamp, continuation gate |
 | `reused` | Existing approved work still meets the gate | Artifact paths, approval/source evidence, original confirmation, revalidation actor and timestamp |
 | `invalidated` | Later evidence or a change made the result unsafe to reuse | Invalidating decision/change ID and affected artifacts |
 | `not_applicable` | Phase output is genuinely outside the agreed scope | Reason and scope decision |
@@ -48,6 +52,7 @@ Every phase entry in `prototype-workflow-state.json` uses one status:
 The checkpoint must encode those requirements directly:
 
 - every `confirmed` or `reused` phase records the workflow `baseline_version`;
+- every `confirmed` or `reused` phase records confirmation provenance and an explicit `continuation_gate`; a required gate must resolve to its source;
 - every `reused` phase has `revalidated_by` and `revalidated_at`, separate from the original confirmation;
 - every `blocked` phase has nonempty `decision_ids`; every referenced open Decision lists the phase in `affected_phases` and contains the current question and recommendation;
 - every `not_applicable` phase has `reason` and a confirmed `scope_decision_id` that lists the phase;
@@ -64,7 +69,7 @@ Do not ask when an existing approved artifact unambiguously satisfies the exit g
 For every new decision or change:
 
 1. identify affected requirements, actors, permissions, states, transitions, flows, pages, tests, guides, and artifacts;
-2. mark their gates `invalidated` and record `invalidated_by`;
+2. mark their gates and every dependent downstream gate `invalidated`, record a resolvable `invalidated_by` Decision ID, and invalidate their evidence;
 3. keep unrelated gates unchanged;
 4. resume from the earliest invalidated phase;
 5. re-run targeted checks and the broad regression set required by the changed risk.
@@ -73,20 +78,20 @@ For every new decision or change:
 
 `new` means create unless the project has an equivalent artifact. `reuse` means validate and reference an existing artifact. `conditional` depends on scope or visual evidence.
 
-| Artifact | Full | Fast | Incremental |
-|---|---|---|---|
-| Workflow checkpoint | new | new | new or update |
-| Source-unit evidence manifest | new for image-bearing sources | reuse and revalidate | update affected sources/units |
-| Evidence and requirement baseline | new | reuse | update affected items |
-| Role, state, action, and flow model | new | reuse | update if invalidated |
-| Reviewed journey coverage | new for high-risk transitions | reuse or complete gaps | update affected journeys |
-| Page specification | new | reuse or complete gaps | update affected pages |
-| Runnable maintained source | new | new | update |
-| Embedded requirements and page guides | new | new or update | update affected content |
-| Design QA | conditional | conditional | conditional for changed views |
-| Acceptance report | new | new | update with regression evidence |
-| Passed-evidence register | new for final acceptance | new for final acceptance | update changed evidence |
-| Offline standalone HTML | new unless narrowed | new unless narrowed | rebuild unless explicitly excluded |
+| Artifact | Lite | Full | Fast | Incremental |
+|---|---|---|---|---|
+| Workflow checkpoint | compact | new | new | new or update |
+| Source-unit evidence manifest | only image-bearing | new for image-bearing sources | reuse and revalidate | update affected sources/units |
+| Evidence and requirement baseline | compact | new | reuse | update affected items |
+| Role, state, action, and flow model | not separate unless needed | new | reuse | update if invalidated |
+| Reviewed journey coverage | none by Lite definition | new for high-risk transitions | reuse or complete gaps | update affected journeys |
+| Page specification | compact | new | reuse or complete gaps | update affected pages |
+| Runnable maintained source | new | new | new | update |
+| Embedded requirements and page guides | scope-based | new | new or update | update affected content |
+| Design QA | conditional | conditional | conditional | conditional for changed views |
+| Acceptance report | compact | new | new | update with regression evidence |
+| Passed-evidence register | final acceptance | new for final acceptance | new for final acceptance | update changed evidence |
+| Offline standalone HTML | scope-based | new unless narrowed | new unless narrowed | rebuild unless explicitly excluded |
 
 ## Checkpoint lifecycle
 
@@ -100,16 +105,19 @@ Copy the workflow-state template at the start of a multi-phase task. Update it w
 
 The progress board must be derived from the checkpoint. Do not keep a contradictory state only in conversation.
 
-For PDF, image-set, slide, or screenshot-heavy evidence, also copy `evidence-manifest.json`. A source with `total_units: N` must contain exactly one inspected record for each unit `1..N`. When `requires_visual_review` is true, every unit must include `render` or `visual` in `inspection_methods`. An in-scope unit requires evidence IDs; an excluded unit requires a reason.
+For PDF, image-set, slide, or screenshot-heavy evidence, set `evidence_profile: image_bearing` and copy `evidence-manifest.json`. A source with `total_units: N` must contain exactly one inspected record for each unit `1..N`. PDF and image sources always require `render` or `visual` inspection. An in-scope unit requires registered `EVD-*` IDs; an excluded unit requires a reason. Text-only work sets `evidence_profile: text_only` and records every Source register ID in `text_source_ids` instead. Final package validation rejects contradictions between these declarations and the source register.
 
 For multi-role, approval, validation-heavy, or exception-heavy workflows, also copy `journey-coverage.json`. Draft it from confirmed P3/P4 transitions and update it whenever a relevant requirement, state, action, owner, or expected result changes. It becomes final only when every in-scope journey resolves to matching passed test/browser claims.
+
+Set `visual_profile: comparison_required` whenever a selected visual truth exists; final package validation then requires Design QA. Use `visual_profile: none` only when visual comparison is genuinely outside the agreed scope.
 
 Run:
 
 ```bash
-python3 scripts/validate-evidence-manifest.py evidence-manifest.json
+python3 scripts/validate-evidence-manifest.py evidence-manifest.json --evidence-register evidence-register.json --baseline-version <baseline-version> --require-schema 0.4
 python3 scripts/validate-workflow-state.py prototype-workflow-state.json
-python3 scripts/validate-journey-coverage.py --journeys journey-coverage.json --evidence-register evidence-register.json --baseline-version <baseline-version>
+python3 scripts/validate-journey-coverage.py --journeys journey-coverage.json --evidence-register evidence-register.json --requirements requirements-analysis.md --baseline-version <baseline-version> --require-schema 0.4
+python3 scripts/validate-package.py <all applicable 0.3 package arguments>
 ```
 
 ## Resuming interrupted work

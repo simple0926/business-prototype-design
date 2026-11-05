@@ -24,7 +24,7 @@ Every Source value in the requirement coverage table must resolve to a Source ID
 |---|---|---|---|---|---|---|---|
 
 Coverage values: `satisfied`, `partial`, `missing`, `pending_confirmation`, `deferred`, `out_of_scope`.
-`missing` and `pending_confirmation` coverage cannot have a final acceptance result of `passed`.
+`partial`, `missing`, and `pending_confirmation` coverage cannot have a final acceptance result of fully `passed`; split accepted sub-scopes into atomic requirements.
 For interaction, validation, or state-transition requirements, include confirmed `JNY-*` IDs in Acceptance mapping.
 
 ## 4. Roles and permissions

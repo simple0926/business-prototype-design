@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.4",
+  "skill_version": "0.3",
+  "mode": "full",
+  "scope_id": "SCOPE-GOLDEN-001",
+  "baseline_version": "B-GOLDEN-001",
+  "evidence_profile": "text_only",
+  "text_source_ids": ["SRC-001"],
+  "evidence_manifest": null,
+  "evidence_register": "evidence-register.json",
+  "journey_profile": "high_risk",
+  "journey_coverage": "journey-coverage.json",
+  "visual_profile": "none",
+  "current_phase": "P8_HANDOFF",
+  "phases": {
+    "P1_EVIDENCE": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["requirements-analysis.md"], "evidence": ["SRC-001"], "decision_ids": ["DEC-001"], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T19:00:00+08:00", "confirmation": {"source_type": "approved_artifact", "source_ref": "requirements-analysis.md#source-register"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "requirements-analysis.md", "reason": "Approved text baseline is explicit."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P2_REQUIREMENTS": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["requirements-analysis.md"], "evidence": ["DEC-001"], "decision_ids": ["DEC-001"], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T19:05:00+08:00", "confirmation": {"source_type": "approved_artifact", "source_ref": "requirements-analysis.md#requirement-coverage"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "DEC-001", "reason": "Approved baseline resolves implementation-changing choices."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P3_BUSINESS_MODEL": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["requirements-analysis.md"], "evidence": ["DEC-001"], "decision_ids": ["DEC-001"], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T19:10:00+08:00", "confirmation": {"source_type": "approved_artifact", "source_ref": "requirements-analysis.md#roles-and-four-canonical-states"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "DEC-001", "reason": "Roles and states are part of the approved baseline."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P4_FLOW": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["requirements-analysis.md", "journey-coverage.json"], "evidence": ["EVD-002"], "decision_ids": ["DEC-001"], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T19:15:00+08:00", "confirmation": {"source_type": "authorized_test", "source_ref": "EVD-002"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "EVD-002", "reason": "Confirmed transition is covered by JNY-001."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P5_PAGE_SPEC": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["prototype-spec.md"], "evidence": ["DEC-001"], "decision_ids": ["DEC-001"], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T19:20:00+08:00", "confirmation": {"source_type": "approved_artifact", "source_ref": "prototype-spec.md"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "DEC-001", "reason": "Page inventory and acceptance points are explicit."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P6_BUILD": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["prototype-standalone.html"], "evidence": ["EVD-001"], "decision_ids": [], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T20:00:00+08:00", "confirmation": {"source_type": "validator_bundle", "source_ref": "EVD-001"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "EVD-001", "reason": "Build evidence matches the baseline."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P7_PACKAGE": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["prototype-standalone.html", "evidence-register.json"], "evidence": ["EVD-001"], "decision_ids": [], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T20:05:00+08:00", "confirmation": {"source_type": "validator_bundle", "source_ref": "EVD-001"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "EVD-001", "reason": "Standalone artifact and registry are synchronized."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null},
+    "P8_HANDOFF": {"status": "confirmed", "baseline_version": "B-GOLDEN-001", "artifacts": ["acceptance-report.md", "evidence-register.json", "journey-coverage.json"], "evidence": ["EVD-002", "EVD-003"], "decision_ids": [], "confirmed_by": "golden-sample-verifier", "confirmed_at": "2026-11-04T20:10:00+08:00", "confirmation": {"source_type": "validator_bundle", "source_ref": "acceptance-report.md"}, "continuation_gate": {"required": false, "satisfied": true, "source_ref": "acceptance-report.md", "reason": "All package validators and reviewed journeys passed."}, "revalidated_by": null, "revalidated_at": null, "reason": null, "scope_decision_id": null, "invalidated_by": null}
+  },
+  "decisions": [
+    {"id": "DEC-001", "status": "confirmed", "affected_phases": ["P1_EVIDENCE", "P2_REQUIREMENTS", "P3_BUSINESS_MODEL", "P4_FLOW", "P5_PAGE_SPEC"], "question": "Use the supplied two-role, four-state baseline?", "recommended_option": "Use it as the approved golden-sample baseline.", "confirmation": {"source_type": "user_message", "source_ref": "golden-sample-approved-baseline", "confirmed_by": "sample-owner", "confirmed_at": "2026-11-04T18:55:00+08:00"}}
+  ],
+  "open_decisions": [],
+  "invalidated_artifacts": [],
+  "last_verified_at": "2026-11-04T20:10:00+08:00",
+  "next_safe_action": "Use this package as the 0.3 contract reference."
+}

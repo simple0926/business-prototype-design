@@ -59,7 +59,9 @@
 
 #### Acceptance points
 
-- [ ]
+| Acceptance ID | Requirement ID | Observable result |
+|---|---|---|
+| ACC-001 | REQ-001 | Replace with a concrete observable result. |
 
 ## 4. Requirement and test mapping
 

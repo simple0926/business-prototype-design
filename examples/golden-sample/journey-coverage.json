@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.4",
+  "baseline_version": "B-GOLDEN-001",
+  "journeys": [
+    {
+      "id": "JNY-001",
+      "requirement_ids": ["REQ-002"],
+      "claim_type": "state_transition",
+      "actor": "Requester",
+      "start_state": "draft",
+      "action": "Submit request",
+      "expected_state": "submitted",
+      "next_actor": "Reviewer",
+      "risk_tags": ["core_path", "cross_role", "persistence"],
+      "evidence_ids": ["EVD-002"],
+      "result": "passed"
+    }
+  ]
+}

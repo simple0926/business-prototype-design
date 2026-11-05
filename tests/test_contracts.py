@@ -40,6 +40,13 @@ def run_node(script, *args):
     )
 
 
+def contract_sections():
+    return "".join(
+        f"<!-- BPD:{name}:START --><section>{name.title()} content for the verified prototype baseline.</section><!-- BPD:{name}:END -->"
+        for name in ("REQUIREMENTS", "ROLES", "FLOWS", "PAGE_GUIDES", "VERSION")
+    )
+
+
 def phase(status="not_started", **overrides):
     value = {
         "status": status,
@@ -103,7 +110,7 @@ def write_evidence_manifest(path, source_path, total_units=1, included_units=Non
                             "inspected": True,
                             "inspection_methods": ["text", "render"],
                             "classification": "mixed",
-                            "evidence_ids": [f"SRC-001-P{number:03d}"],
+                            "evidence_ids": [f"EVD-{number:03d}"],
                             "notes": "Reviewed.",
                         }
                         for number in included_units
@@ -127,10 +134,15 @@ def write_traceability_files(
     requirements = root / "requirements.md"
     acceptance = root / "acceptance.md"
     registry = root / "evidence-register.json"
+    prototype_spec = root / "prototype-spec.md"
     implementation = root / "implementation.txt"
     test_result = root / "test-result.txt"
     implementation.write_text("implemented", encoding="utf-8")
     test_result.write_text("passed", encoding="utf-8")
+    prototype_spec.write_text(
+        "# Prototype Specification\n\n## PAGE-001 Request page\n\n- ACC-001: Submit request succeeds.\n",
+        encoding="utf-8",
+    )
 
     if requirement_columns == 8:
         requirements.write_text(
@@ -316,7 +328,7 @@ class TraceabilityContractTests(unittest.TestCase):
             )
 
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("evidence path not found", result.stderr)
+            self.assertIn("evidence path is not a file", result.stderr)
 
     def test_unsupported_evidence_kind_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -640,12 +652,9 @@ class StandaloneContractTests(unittest.TestCase):
                 'document.body.dataset.ready = "true";',
                 encoding="utf-8",
             )
-            markers = " ".join(
-                ["BPD:REQUIREMENTS", "BPD:ROLES", "BPD:FLOWS", "BPD:PAGE_GUIDES", "BPD:VERSION"]
-            )
             source.write_text(
                 f"""<!doctype html><html><head><link rel="stylesheet" href="assets/style.css"></head>
-<body><!-- {markers} --><script type="module" src="assets/app.js"></script></body></html>""",
+<body>{contract_sections()}<script type="module" src="assets/app.js"></script></body></html>""",
                 encoding="utf-8",
             )
 
@@ -658,13 +667,10 @@ class StandaloneContractTests(unittest.TestCase):
     def test_embedded_artifact_with_contract_markers_passes(self):
         with tempfile.TemporaryDirectory() as directory:
             html = Path(directory) / "prototype.html"
-            markers = " ".join(
-                ["BPD:REQUIREMENTS", "BPD:ROLES", "BPD:FLOWS", "BPD:PAGE_GUIDES", "BPD:VERSION"]
-            )
             html.write_text(
                 f"""<!doctype html>
 <html><head><style>body {{ color: #111; }}</style></head>
-<body><!-- {markers} --><script>document.body.dataset.ready = "true";</script></body></html>
+<body>{contract_sections()}<script>document.body.dataset.ready = "true";</script></body></html>
 """,
                 encoding="utf-8",
             )

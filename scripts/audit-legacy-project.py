@@ -8,13 +8,7 @@ from pathlib import Path
 
 
 SKIP_DIRECTORIES = {".git", "node_modules", "dist", "build", ".cache"}
-CONTRACT_MARKERS = {
-    "BPD:REQUIREMENTS",
-    "BPD:ROLES",
-    "BPD:FLOWS",
-    "BPD:PAGE_GUIDES",
-    "BPD:VERSION",
-}
+CONTRACT_SECTIONS = {"REQUIREMENTS", "ROLES", "FLOWS", "PAGE_GUIDES", "VERSION"}
 ID_PATTERN = re.compile(r"(?:REQ(?:-[A-Z]+)?|R)-\d{3,}")
 
 
@@ -92,7 +86,11 @@ def analyze(root):
     standalone_without_markers = []
     for path in html_files:
         text = path.read_text(encoding="utf-8", errors="replace")
-        if CONTRACT_MARKERS.issubset(set(marker for marker in CONTRACT_MARKERS if marker in text)):
+        if all(
+            re.search(rf"BPD:{section}:START", text, re.I)
+            and re.search(rf"BPD:{section}:END", text, re.I)
+            for section in CONTRACT_SECTIONS
+        ):
             standalone_with_markers.append(relative(path))
         elif "<script" in text and "<style" in text:
             standalone_without_markers.append(relative(path))
@@ -135,7 +133,7 @@ def analyze(root):
             if legacy_acceptance
             else "Create an acceptance report after requirements are mapped.",
         ),
-        finding("workflow checkpoint", "canonical" if checkpoint else "missing", checkpoint, "Checkpoint found." if checkpoint else "No workflow checkpoint found.", "Validate it." if checkpoint else "Create a public 0.2 checkpoint and mark reusable gates only after review."),
+        finding("workflow checkpoint", "canonical" if checkpoint else "missing", checkpoint, "Checkpoint found." if checkpoint else "No workflow checkpoint found.", "Validate and migrate it to the public 0.3/schema 0.4 contract." if checkpoint else "Create a public 0.3 checkpoint and mark reusable gates only after review."),
         finding("evidence manifest", "canonical" if manifests else "conditional", manifests, "Evidence manifest found." if manifests else "No evidence manifest found.", "Validate it." if manifests else "Create one only for in-scope image-heavy sources."),
         finding("evidence register", "canonical" if registers else "missing", registers, "Evidence register found." if registers else "No final evidence register found.", "Validate claims and baseline." if registers else "Register refreshed implementation and test/browser evidence before final passed."),
         finding("journey coverage", "canonical" if journeys else "conditional", journeys, "Journey checklist found." if journeys else "No journey checklist found.", "Validate it." if journeys else "Derive it when confirmed interactions, validations, or state transitions are high risk."),
@@ -186,7 +184,7 @@ def render_markdown(report):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Read-only readiness audit for projects created before the public 0.2 workflow.")
+    parser = argparse.ArgumentParser(description="Read-only readiness audit for projects created before the public 0.3 workflow.")
     parser.add_argument("project", type=Path)
     parser.add_argument("--format", choices=("markdown", "json"), default="markdown")
     args = parser.parse_args()

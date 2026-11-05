@@ -6,13 +6,13 @@ Use before declaring the prototype complete.
 
 Before evaluating these layers, validate `prototype-workflow-state.json`. Every completed or reused gate must point to its artifact and evidence; an invalidated or blocked gate prevents a passed handoff.
 
-Validate `evidence-manifest.json` before accepting P1 evidence coverage. For final `passed` rows, validate `evidence-register.json`: each implementation and test/browser evidence ID must resolve to an existing artifact with `result: passed`, the same baseline version, and an ISO 8601 capture timestamp with timezone. Evidence `kind` is limited to `implementation`, `test`, or `browser`; implementation columns accept only `implementation`, while test/browser columns accept `test` or `browser`. Nonempty placeholders such as `not-run` and `not-implemented` are not evidence.
+Validate `evidence-manifest.json` only for `image_bearing` work before accepting P1 evidence coverage. For final `passed` rows, validate the schema `0.4` `evidence-register.json`: each implementation and test/browser evidence ID must resolve to an independent existing file with `result: passed`, the same baseline version, an ISO 8601 capture timestamp, SHA-256, byte count, and media type. Test evidence also records command, exit code, test count, and result summary, and its artifact must parse as TAP, JUnit XML, or structured JSON. Browser evidence records a reproducible command, exit code, environment, target, viewport, steps, assertions, console errors, and network requests. A contract file, hard link, symlink, or byte-identical renamed copy cannot serve as its own proof.
 
 Every Evidence entry used by a passed row also contains a nonempty `claims` list. Each claim binds one Requirement ID to a supported claim type (`presence`, `interaction`, `validation`, `state_transition`, or `delivery`), a stable scenario ID, and observable assertions. A real file that has no claim for the current Requirement does not prove that Requirement.
 
 Validate `journey-coverage.json` for high-risk interactions, validations, and state transitions. A passed journey must resolve every listed Requirement ID to a matching passed test/browser claim with the same Journey ID and claim type. The checklist is reviewed from confirmed P3/P4 models; it is not produced by guessing from free-form text.
 
-Passing a validator proves only the machine-checkable contract named by that validator. It does not prove that a requirement is the right requirement, that an assertion expresses the confirmed business meaning, that the visual target was interpreted correctly, or that an external effect really occurred. Keep mechanical contract results and semantic acceptance conclusions separate.
+Passing a validator proves only the machine-checkable contract named by that validator. Digests prove file identity and parsed result files prove recorded structure, not that an arbitrary third-party command truly ran or that its assertions are semantically correct. A local JSON record cannot prove that a human confirmation occurred without a trusted external event source. Keep mechanical contract results and semantic acceptance conclusions separate.
 
 ## Browser environment boundary
 
@@ -54,6 +54,7 @@ Record the environment and expected data side effect in browser evidence. Do not
 - Requirements, diagrams, page guides, tests, acceptance report, and version record are synchronized.
 - The workflow checkpoint uses the same baseline version and phase IDs as the acceptance report.
 - The journey checklist and evidence claims use the same baseline and Requirement IDs.
+- `validate-package.py` passes for the complete schema `0.4` package.
 
 ## Acceptance report structure
 
