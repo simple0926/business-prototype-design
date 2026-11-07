@@ -1,5 +1,9 @@
 # business-prototype-design
 
+[中文](#中文) · [English](#english)
+
+## 中文
+
 `business-prototype-design` 是一个用于业务软件的 AI Skill，把需求文档、截图、流程图、PRD 或旧原型，逐步转换为可追溯的页面规格、可运行交互原型和离线单文件交付物。
 
 **当前公开版本：0.3**
@@ -110,3 +114,118 @@ business-prototype-design/
 
 [MIT](LICENSE)
 
+
+---
+
+## English
+
+`business-prototype-design` is an AI skill for business software. It turns requirements documents, screenshots, flowcharts, PRDs, and existing prototypes into traceable page specifications, runnable interactive prototypes, and standalone offline deliverables.
+
+**Current public version: 0.3**
+
+### What 0.3 addresses
+
+Version 0.2 introduced a resumable eight-gate state machine and a structured evidence framework. Version 0.3 addresses audit findings where a document passed format checks while its references, files, or offline deliverables were not actually consistent and complete:
+
+1. **Verifiable evidence files:** Evidence records bind independent files to SHA-256 hashes, byte counts, media types, and execution summaries. Requirements and acceptance documents cannot serve as their own proof.
+2. **Connected references and state:** Page, Acceptance, Journey, Decision, and Evidence references must resolve. Invalidated upstream results propagate to downstream stages. Confirmation records retain their sources and continuation gates.
+3. **Safer standalone delivery:** The builder confines assets to the configured root and rejects parent-directory and symlink escapes. The validator rejects static imports, CSS `@import`, and empty shells containing only expected markers.
+4. **A lighter process for small tasks:** Lite mode and measurable escalation thresholds reduce unnecessary overhead. Text-only projects no longer require an image-evidence manifest.
+
+The eight quality gates remain:
+
+`P1 Materials and evidence review` → `P2 Requirements analysis` → `P3 Roles, permissions, and states` → `P4 Business workflows` → `P5 Detailed page specifications` → `P6 Runnable prototype` → `P7 Synchronization and offline packaging` → `P8 Verification and delivery`
+
+Further reading (the linked detailed documents are currently in Chinese unless otherwise indicated):
+
+- [0.3 plain-language update](UPDATE_0.3_CN.md)
+- [0.3 detailed release and migration notes](RELEASE_NOTES_0.3_CN.md)
+- [0.2 update history](UPDATE_HISTORY_CN.md)
+- [Changelog](CHANGELOG.md)
+- [Materials needed for subsequent stage validation](VALIDATION_MATERIALS_CN.md)
+- [Bilingual GitHub release notes](https://github.com/simple0926/business-prototype-design/releases)
+
+### Installation
+
+For Codex:
+
+```bash
+git clone https://github.com/simple0926/business-prototype-design.git
+cp -R business-prototype-design ~/.codex/skills/business-prototype-design
+```
+
+For the shared Agent Skills directory:
+
+```bash
+cp -R business-prototype-design ~/.agents/skills/business-prototype-design
+```
+
+If an older version is installed, back it up first and replace the complete skill directory with version 0.3; do not replace only `SKILL.md`. Version 0.3 uses final-artifact schema `0.4`. Run the migration audit before continuing an older project.
+
+### Usage
+
+Invoke the skill in an AI tool that supports Skills:
+
+```text
+$business-prototype-design
+```
+
+Provide any relevant materials:
+
+- Requirements documents, PRDs, technical requirements, or business rules.
+- Screenshots, flowcharts, page sketches, or visual references.
+- Existing prototypes, HTML, source code, tests, or acceptance reports.
+- A focused change request or an existing project to continue.
+
+The skill selects Lite, Full, Fast, or Incremental mode according to task size and available materials, starting at the earliest unmet quality gate.
+
+### Validate the public package
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The current public package contains 62 contract tests covering the state protocol, requirements traceability, evidence binding, critical business journeys, offline files, path constraints, Lite thresholds, the golden sample, package consistency, and migration audits for older projects.
+
+For full-package acceptance:
+
+```bash
+python3 scripts/validate-package.py \
+  --workflow-state prototype-workflow-state.json \
+  --requirements requirements-analysis.md \
+  --prototype-spec prototype-spec.md \
+  --acceptance acceptance-report.md \
+  --evidence-register evidence-register.json \
+  --standalone prototype-standalone.html \
+  --baseline-version <baseline-version>
+```
+
+See [`examples/golden-sample`](examples/golden-sample) for a complete executable example.
+
+Passing these checks establishes only the correctness of the file structures, references, and evidence bindings they inspect. It does not independently establish that business rules, visual results, performance, or real external-system behavior are correct.
+
+### Directory structure
+
+```text
+business-prototype-design/
+├── SKILL.md
+├── README.md
+├── CHANGELOG.md
+├── RELEASE_NOTES_0.3_CN.md
+├── UPDATE_HISTORY_CN.md
+├── VALIDATION_MATERIALS_CN.md
+├── agents/
+├── assets/
+├── examples/
+├── references/
+├── scripts/
+└── tests/
+```
+
+### Scope
+
+This skill is intended for business prototypes that serve as development references. It is not a disposable visual-mockup generator and does not replace real user research, server-side authorization tests, performance testing, or human business acceptance.
+
+### License
+
+[MIT](LICENSE)
