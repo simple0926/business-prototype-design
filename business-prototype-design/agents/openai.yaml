@@ -1,0 +1,6 @@
+interface:
+  display_name: "业务原型设计"
+  short_description: "编排业务原型从证据到验收的完整流程"
+  default_prompt: "使用 $business-prototype-design 检查已有材料，从最早未满足的阶段推进。按我确认的原型类型、设计规范和交付形式构建与验收。"
+policy:
+  allow_implicit_invocation: true
